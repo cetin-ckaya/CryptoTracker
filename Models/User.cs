@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace CryptoTracker.Models;
 
-public class User
+
+// IdentityUser → ASP.NET Identity'nin hazır kullanıcı sınıfı.
+// Içinde zaten Username, Email, PasswordHash var.
+// Biz bunu miras alarak kendi özel alanlarımızı ekliyoruz.
+public class User : IdentityUser
 {
-    public int Id { get; set; }
-    public string Username { get; set; } = string.Empty; //emptyler ne işe yarıyor?
-    public string Email { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
+     // Kullanıcının hesabı ne zaman oluşturuldu
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
 }

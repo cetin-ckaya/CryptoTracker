@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using CryptoTracker.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace CryptoTracker.Data;
 
-public class AppDbContext : DbContext
+// IdentityDbContext → Identity'nin kendi tablolarını
+// (Users, Roles, Claims vs.) otomatik oluşturan DbContext.
+// Biz AppDbContext'i bundan miras alıyoruz.
+public class AppDbContext : IdentityDbContext<User>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { } //ne işe yarıyor
-
-    public DbSet<User> Users { get; set; } // ne işe yarıyor
-    public DbSet<Transaction> Transactions { get; set; } // ne işe yarıyor
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public DbSet<Transaction> Transactions { get; set; } 
 }
