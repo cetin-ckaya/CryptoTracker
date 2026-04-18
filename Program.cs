@@ -25,7 +25,6 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 6;
-    options.Password.RequireLowercase = false;
 
 })
 .AddEntityFrameworkStores<AppDbContext>();
@@ -63,7 +62,30 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// CORS politikası tanımla
+// "AllowReactApp" → bu politikaya verdiğimiz isim, istediğimiz ismi verebiliriz
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        // React uygulamamızın çalışacağı adrese izin veriyoruz
+        // İleride React'ı 3000 portunda başlatacağız
+        policy.WithOrigins("http://localhost:3000")
+
+        // Tüm HTTP metodlarına izin ver (GET, POST, PUT, DELETE)
+        .AllowAnyMethod()
+
+         // Tüm header'lara izin ver (Content-Type, Authorization gibi)
+              // Authorization header'ı JWT token'ı taşıyacak
+        .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+
+// CORS middleware'i — tanımladığımız politikayı aktif et
+// Bu satır olmazsa tarayıcı React'tan gelen istekleri engeller
+app.UseCors("AllowReactApp");
 
 // Kimlik doğrulama middleware'i — her istekte token kontrol edilir
 app.UseAuthentication();
