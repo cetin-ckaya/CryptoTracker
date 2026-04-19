@@ -6,11 +6,16 @@ using System.Text;
 using CryptoTracker.Data;
 using CryptoTracker.Models;
 using Microsoft.Extensions.Options;
+using CryptoTracker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controller'ları projeye tanıt
 builder.Services.AddControllers();
+
+// AuthService'i dependency injection'a kaydet
+// IAuthService istendiğinde AuthService'i ver
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // SQLite veritabanı bağlantısı
 builder.Services.AddDbContext<AppDbContext>(options =>options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));

@@ -29,4 +29,4 @@ public class Transaction
 
     // Navigation property → bu işlemin sahibi olan kullanıcıya erişmek için
     public User User { get; set; } = null!;
-} 
+}
