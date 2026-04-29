@@ -1,5 +1,9 @@
-namespace CryptoTracker.DTOs
-{
+namespace CryptoTracker.DTOs;
+
+
+    // TransactionDto → Transaction modelinin dışarıya gönderilen versiyonu
+    // UserId burada YOK — zaten giriş yapmış kullanıcının işlemlerini döneceğiz
+    // User navigation property YOK — iç model detayları dışarı çıkmamalı
     public class TransactionDto
     {
      // İşlemin ID'si — silme veya güncelleme için kullanacağız
@@ -19,5 +23,10 @@ namespace CryptoTracker.DTOs
 
     // İşlem tarihi — portföy geçmişinde göstereceğiz
     public DateTime Date { get; set; }
+
+    // Toplam işlem tutarı — Amount * Price
+    // get only → sadece okunabilir, veritabanında saklanmaz
+    // AutoMapper bunu hesaplayarak doldurur
+    public decimal Total => Amount * Price;
+
     }
-}

@@ -8,6 +8,7 @@ using CryptoTracker.Models;
 using Microsoft.Extensions.Options;
 using CryptoTracker.Services;
 using CryptoTracker.Repositories;
+using CryptoTracker.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // TransactionRepository'yi dependency injection'a kaydet
-builder.Services.AddScoped<ITransactionRepository,TransactionRepository>(); //injection ne demek
+builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
 
 // SQLite veritabanı bağlantısı
 builder.Services.AddDbContext<AppDbContext>(options =>options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -71,6 +72,12 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// AutoMapper'ı projeye tanıt
+// MappingProfile'ı otomatik bulup kaydet
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddProfile<MappingProfile>();
+});
+
 // CORS politikası tanımla
 // "AllowReactApp" → bu politikaya verdiğimiz isim, istediğimiz ismi verebiliriz
 builder.Services.AddCors(options =>
@@ -106,7 +113,7 @@ app.UseAuthorization();
 using (var scope = app.Services.CreateScope())
 {
      // Gerekli servisleri scope içinden al
-     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>(); //scope ne işe yarıyor
+     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>(); 
      var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
      // Seed data'yı çalıştır — veri varsa hiçbir şey yapmaz

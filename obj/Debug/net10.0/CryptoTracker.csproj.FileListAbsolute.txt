@@ -187,3 +187,4 @@ C:\Users\çetin\Desktop\CryptoTracker\bin\Debug\net10.0\runtimes\win-x86\native\
 C:\Users\çetin\Desktop\CryptoTracker\obj\Debug\net10.0\CryptoTracker.sourcelink.json
 C:\Users\çetin\Desktop\CryptoTracker\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\çetin\Desktop\CryptoTracker\bin\Debug\net10.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+C:\Users\çetin\Desktop\CryptoTracker\bin\Debug\net10.0\AutoMapper.dll
