@@ -7,6 +7,7 @@ using CryptoTracker.Data;
 using CryptoTracker.Models;
 using Microsoft.Extensions.Options;
 using CryptoTracker.Services;
+using CryptoTracker.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,9 @@ builder.Services.AddControllers();
 // AuthService'i dependency injection'a kaydet
 // IAuthService istendiğinde AuthService'i ver
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// TransactionRepository'yi dependency injection'a kaydet
+builder.Services.AddScoped<ITransactionRepository,TransactionRepository>(); //injection ne demek
 
 // SQLite veritabanı bağlantısı
 builder.Services.AddDbContext<AppDbContext>(options =>options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -97,6 +101,17 @@ app.UseAuthentication();
 
 // Yetkilendirme middleware'i — [Authorize] attribute'u için gerekli
 app.UseAuthorization();
+
+// Uygulama başlarken seed data çalıştır
+using (var scope = app.Services.CreateScope())
+{
+     // Gerekli servisleri scope içinden al
+     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>(); //scope ne işe yarıyor
+     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+     // Seed data'yı çalıştır — veri varsa hiçbir şey yapmaz
+     await SeedData.InitializeAsync(userManager, context);
+}   
 
 app.MapControllers();
 
