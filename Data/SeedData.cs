@@ -8,9 +8,9 @@ namespace CryptoTracker.Data;
 // Her başlatmada kontrol eder — veri varsa tekrar eklemez
 public static class SeedData
 {
-    public static async Task InitializeAsync( //ne işe yarıyor içindekiler ne anlama geliyor
-        UserManager<User> userManager,
-        AppDbContext context)
+    public static async Task InitializeAsync( //InitializeAsync — uygulama ilk başladığında veritabanına örnek veri ekleyen bir metod.
+        UserManager<User> userManager, // Identity'nin kullanıcı yönetim servisi
+        AppDbContext context)          // Veritabanı bağlantısı
     {
         // Test kullanıcısı zaten varsa hiçbir şey yapma
         if (userManager.Users.Any()) return;
@@ -69,7 +69,7 @@ public static class SeedData
         };
 
     // Tüm işlemleri veritabanına ekle
-    context.Transactions.AddRange(transactions); // ne anlama geliyor
+    context.Transactions.AddRange(transactions); 
     await context.SaveChangesAsync();
     }
 }

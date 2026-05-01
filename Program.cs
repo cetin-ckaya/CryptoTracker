@@ -12,12 +12,19 @@ using CryptoTracker.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Swagger servislerini ekle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 // Controller'ları projeye tanıt
 builder.Services.AddControllers();
 
 // AuthService'i dependency injection'a kaydet
 // IAuthService istendiğinde AuthService'i ver
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// TransactionService'i dependency injection'a kaydet
+builder.Services.AddScoped<ITransactionService,TransactionService>();
 
 // TransactionRepository'yi dependency injection'a kaydet
 builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
@@ -98,6 +105,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Swagger'ı geliştirme ortamında aktif et
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // CORS middleware'i — tanımladığımız politikayı aktif et
 // Bu satır olmazsa tarayıcı React'tan gelen istekleri engeller

@@ -16,6 +16,10 @@ public class MappingProfile : Profile
         // CreateMap → "Transaction'ı TransactionDto'ya çevir" demek
         // AutoMapper aynı isimli alanları otomatik eşleştirir
         // Id, CoinSymbol, Type, Amount, Price, Date — hepsi aynı isimde olduğu için otomatik gider
+        // Transaction → TransactionDto dönüşümü
+        // Total alanı hesaplanmış alan — Amount * Price
+        // TransactionDto'da Total { get => Amount * Price } olarak tanımlandı
+        // AutoMapper sadece kaynak alanlara baktığı için bunu atlıyor, sorun yok
         CreateMap<Transaction, TransactionDto>();
 
         // User → UserDto dönüşümünü tanımla
