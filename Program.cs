@@ -26,6 +26,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // TransactionService'i dependency injection'a kaydet
 builder.Services.AddScoped<ITransactionService,TransactionService>();
 
+// PortfolioService'i dependency injection'a kaydet
+builder.Services.AddScoped<IPortfolioService, PortfolioService>();
+
 // TransactionRepository'yi dependency injection'a kaydet
 builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
 
