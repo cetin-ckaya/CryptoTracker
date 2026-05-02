@@ -12,9 +12,13 @@ public class PortfolioService : IPortfolioService
     // ITransactionRepository → kullanıcının işlemlerini getirmek için
     private readonly ITransactionRepository _transactionrepository;
 
-    public PortfolioService(ITransactionRepository transactionRepository)
+    // ICoinService → anlık coin fiyatlarını çekmek için
+    private readonly ICoinService _coinservice;
+
+    public PortfolioService(ITransactionRepository transactionRepository,ICoinService coinService)
     {
         _transactionrepository = transactionRepository;
+        _coinservice = coinService;
     }
 
     // Kullanıcının tüm coinlerinin portföy özetini hesapla
@@ -28,11 +32,26 @@ public class PortfolioService : IPortfolioService
         // Örnek: BTC işlemleri bir grup, ETH işlemleri başka bir grup
         var grouped = transaction.GroupBy(t => t.CoinSymbol);
 
+        // Elimizdeki tüm coin sembollerini topla
+        var symbols = grouped.Select(g => g.Key).ToList();
+
+        // CoinGecko'dan tüm coinlerin fiyatını tek seferde çek
+        // Tek tek istek atmak yerine toplu istek daha verimli
+        var prices = await _coinservice.GetCoinPriceAsync(symbols);
+
         // Her coin grubu için PortfolioDto hesapla
-        var portfolio = grouped.Select(group => CalculatePortfolio(group.Key, group.ToList()));
-    
-        // Sadece hâlâ elimizde coin olanları döndür
-        // TotalAmount <= 0 olan coinleri listeden çıkar
+        var portfolio = grouped.Select(group =>
+        {
+            // Bu coin için anlık fiyat var mı kontrol et
+            // Yoksa 0 kullan
+            var currenPrice = prices.TryGetValue(group.Key, out var price) ? price : 0;
+            
+            // Portfolio hesapla — anlık fiyatı da gönder
+            return CalculatePortfolio(group.Key, group.ToList(), currenPrice);
+
+        });
+
+        //Sadece elimizde coin olanları döndür
         return portfolio.Where(p => p.TotalAmount > 0);
     }
 
@@ -52,12 +71,14 @@ public class PortfolioService : IPortfolioService
         //Hiç işlem yoksa null döndür
         if(!coinTransactions.Any()) return null;
 
+        var currenPrice = await _coinservice.GetCoinPriceAsync(coinSymbol) ?? 0;
+
         //Portfolio hesapla ve döndür
-        return CalculatePortfolio(coinSymbol.ToUpper(),coinTransactions); 
+        return CalculatePortfolio(coinSymbol.ToUpper(),coinTransactions, currenPrice); 
     }
 
     // Bir coinin tüm işlemlerinden portföy hesaplayan yardımcı metod
-    private PortfolioDto CalculatePortfolio(string coinSymbol, List<Models.Transaction> transactions) // list models transaction ne demek
+    private PortfolioDto CalculatePortfolio(string coinSymbol, List<Models.Transaction> transactions, decimal currentPrice) // list models transaction ne demek
     {
         //Sadece alış işlemlerini al
         var buyTransaction = transactions.Where(t => t.Type == "buy").ToList();

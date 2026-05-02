@@ -29,6 +29,10 @@ builder.Services.AddScoped<ITransactionService,TransactionService>();
 // PortfolioService'i dependency injection'a kaydet
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 
+// CoinService'i dependency injection'a kaydet
+// AddHttpClient → HttpClient'ı otomatik yönetir, her seferinde new HttpClient() yazmak yerine
+builder.Services.AddHttpClient<ICoinService,CoinService>();
+
 // TransactionRepository'yi dependency injection'a kaydet
 builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
 
