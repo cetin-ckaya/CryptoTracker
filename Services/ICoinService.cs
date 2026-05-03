@@ -12,5 +12,5 @@ public interface ICoinService
     // Birden fazla coinin fiyatını tek seferde getir
     // Örnek: BTC, ETH, SOL fiyatlarını aynı anda çek
     // Dictionary → her coin sembolü için bir fiyat döner
-    Task<Dictionary<string, decimal>> GetCoinPriceAsync(IEnumerable<string> coinSymbols);
+    Task<Dictionary<string, decimal>> GetCoinPricesAsync(IEnumerable<string> coinSymbols);
 }

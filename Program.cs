@@ -29,9 +29,14 @@ builder.Services.AddScoped<ITransactionService,TransactionService>();
 // PortfolioService'i dependency injection'a kaydet
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 
-// CoinService'i dependency injection'a kaydet
-// AddHttpClient → HttpClient'ı otomatik yönetir, her seferinde new HttpClient() yazmak yerine
-builder.Services.AddHttpClient<ICoinService,CoinService>();
+// CoinService'i Scoped olarak kaydet ama HttpClient'a BaseAddress'i burada ver
+builder.Services.AddHttpClient<ICoinService,CoinService>(client =>
+{
+    // BaseAddress'i burada set ediyoruz — CoinService constructor'ına gerek kalmıyor
+    client.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
+    client.DefaultRequestHeaders.Add("User-Agent", "CryptoTracker/1.0");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 // TransactionRepository'yi dependency injection'a kaydet
 builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();

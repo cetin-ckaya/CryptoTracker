@@ -31,14 +31,28 @@ public class PortfolioController : ControllerBase
         if(userId == null) return Unauthorized();
 
         //Service den portfoy hesapla
-        var portfolio = await _portfolioservice.GetPortfoliosAsync(userId);
+        var portfolio = await _portfolioservice.GetPortfolioAsync(userId);
 
         return Ok(portfolio);
     }
 
+    // GET api/portfolio/summary — tüm portföyün genel özeti
+    // Dashboard'ın stat kartları bu endpoint'ten beslenecek
+    [HttpGet("{summary}")]
+    public async Task<IActionResult> GetSummary()
+    {
+        var userId = GetUserId();
+        if(userId == null) return Unauthorized();
+
+        //Serviceten genel özeti al
+        var summary = await _portfolioservice.GetPortfolioSummaryAsync(userId);
+
+        return Ok(summary);
+    }
+
     // GET api/portfolio/{coinSymbol} — tek bir coinin özetini getir
     // Örnek: GET api/portfolio/BTC
-    [HttpGet("{coinSymbol}")]
+    [HttpGet("coin/{coinSymbol}")]
     public async Task<IActionResult> GetCoinPortfolio(string coinSymbol)
     {
         var userId = GetUserId();

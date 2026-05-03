@@ -22,7 +22,7 @@ public class PortfolioService : IPortfolioService
     }
 
     // Kullanıcının tüm coinlerinin portföy özetini hesapla
-    public async Task<IEnumerable<PortfolioDto>> GetPortfoliosAsync(string userId)
+    public async Task<IEnumerable<PortfolioDto>> GetPortfolioAsync(string userId)
     {
         // Kullanıcının tüm işlemlerini getir
         var transaction = await _transactionrepository.GetByUserIdAsync(userId);
@@ -37,7 +37,7 @@ public class PortfolioService : IPortfolioService
 
         // CoinGecko'dan tüm coinlerin fiyatını tek seferde çek
         // Tek tek istek atmak yerine toplu istek daha verimli
-        var prices = await _coinservice.GetCoinPriceAsync(symbols);
+        var prices = await _coinservice.GetCoinPricesAsync(symbols);
 
         // Her coin grubu için PortfolioDto hesapla
         var portfolio = grouped.Select(group =>
@@ -77,6 +77,41 @@ public class PortfolioService : IPortfolioService
         return CalculatePortfolio(coinSymbol.ToUpper(),coinTransactions, currenPrice); 
     }
 
+    //Tüm portföyün genel özetini hesapla
+    public async Task<PortfolioSummaryDto> GetPortfolioSummaryAsync(string userId)
+    {
+        // Tüm coinlerin portföy özetini al — anlık fiyatlar dahil
+        var portfolio = (await GetPortfolioAsync(userId)).ToList();
+
+        // Toplam portföy değeri — tüm coinlerin güncel değerlerini topla
+        var totalValue = portfolio.Sum(p => p.CurrentValue);
+
+        // Toplam yatırım — tüm coinlerin yatırım tutarlarını topla
+        var totalInvested = portfolio.Sum(p => p.TotalInvested);
+
+        //Toplam Kar/zarar
+        var totalProfitLoss = totalValue - totalInvested;
+
+        //Toplam Kar/zarar yüzdesi
+        var totalProfitLossPercentage = totalInvested > 0 ?
+            (totalProfitLoss / totalInvested) * 100 : 0;
+
+        return new PortfolioSummaryDto
+        {
+            TotalValue = totalValue,
+            TotalInvested = totalInvested,
+            TotalProfitLoss = totalProfitLoss,
+            TotalProfitLossPercentage = totalProfitLossPercentage,
+
+            //Kaç farklı coin var
+            CoinCount = portfolio.Count,
+
+            //Her coinin detaylı özeti
+            Coins = portfolio
+
+        };
+    }
+
     // Bir coinin tüm işlemlerinden portföy hesaplayan yardımcı metod
     private PortfolioDto CalculatePortfolio(string coinSymbol, List<Models.Transaction> transactions, decimal currentPrice) // list models transaction ne demek
     {
@@ -107,8 +142,8 @@ public class PortfolioService : IPortfolioService
         var averageBuyPrice = totalBought > 0 ? totalInvested / totalBought : 0;
 
         // Şu an için CurrentValue = 0
-        // Gün 11'de CoinGecko'dan anlık fiyat çekince güncellenecek
-        var currentValue = 0m;
+        // elimizdeki miktar * anlık fiyat = güncel değer
+        var currentValue = totalAmount * currentPrice;
 
         // Kar/zarar = Güncel değer - Toplam yatırım
         var profitLoss = currentValue - totalInvested;

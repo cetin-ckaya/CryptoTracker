@@ -28,7 +28,7 @@ public class CoinController : ControllerBase
         var symbolList = symbols.Split(",").Select(s => s.Trim()).ToList();
 
         //CoinGecko dan fiyatlari çek
-        var prices = await _coinservice.GetCoinPriceAsync(symbolList);
+        var prices = await _coinservice.GetCoinPricesAsync(symbolList);
 
         return Ok(prices);
     } 

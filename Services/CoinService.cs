@@ -12,20 +12,18 @@ public class CoinService : ICoinService
     // Sembol → CoinGecko ID eşleştirmesini cache'de tutuyoruz
     // Uygulama her başladığında CoinGecko'dan çekiyoruz
     // Dictionary → "BTC" → "bitcoin" gibi
-    private Dictionary<string,string> _coinIds = new();
+    private static Dictionary<string,string> _coinIds = new();
 
     // Cache ne zaman dolduruldu — 1 saatte bir yeniliyoruz
-    private DateTime _lastCacheTime = DateTime.MinValue;
+    // static → tüm instance'lar aynı cache'i paylaşır
+    // Singleton olmadan da cache çalışır
+    private static DateTime _lastCacheTime = DateTime.MinValue;
 
     public CoinService(HttpClient httpClient)
     {
         _httpclient = httpClient;
-        // CoinGecko API'nin base URL'i
-        _httpclient.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
-
-        // CoinGecko ücretsiz API için gerekli header
-        _httpclient.DefaultRequestHeaders.Add("User-Agent", "CryptoTracker/1.0");
-        _httpclient.DefaultRequestHeaders.Add("Accept","application/json");
+         // HttpClient Program.cs'de yapılandırıldı, burada sadece atıyoruz
+       
     }
 
     // CoinGecko'daki tüm coinlerin sembol → ID eşleştirmesini çek
@@ -130,7 +128,7 @@ public class CoinService : ICoinService
     }
 
     //Birden fazla coinin fiyatını tek seferde getir 
-    public async Task<Dictionary<string,decimal>> GetCoinPriceAsync(IEnumerable<string> coinSymbols)
+    public async Task<Dictionary<string,decimal>> GetCoinPricesAsync(IEnumerable<string> coinSymbols)
     {
         //Cachi kontrol et, gerekirse yenile
         await EnsureCoinIdsLoadedAsync();
