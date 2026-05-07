@@ -1,4 +1,3 @@
-using System.Transactions;
 using CryptoTracker.DTOs;
 
 namespace  CryptoTracker.Services;
@@ -7,9 +6,16 @@ namespace  CryptoTracker.Services;
 // Controller bu interface'i kullanır, içeride nasıl çalıştığını bilmez
 public interface ITransactionService
 {
-    // Kullanıcıya ait tüm işlemleri getir
-    // userId → hangi kullanıcının işlemleri isteniyor
-    Task<IEnumerable<TransactionDto>> GetUserTransactionAsync(string userId);  //task ne işe yarıyor, IEnumarable ne işe yarıyor içine yazdığımız paramereyi ne yapıyor ve getusertransactionasync bizim oluşturdğumuz bir method mu?
+    // Sayfalanmış ve filtrelenmiş işlem listesi
+    // page → hangi sayfa, pageSize → sayfa başına kaç kayıt
+    // coinSymbol → opsiyonel filtre, null ise tüm coinler
+    // type → opsiyonel filtre, "buy" veya "sell", null ise hepsi
+    Task<PaginatedResultDto<TransactionDto>> GetUserTransactionsAsync(
+        string userId,
+        int page,
+        int pageSize,
+        string? coinSymbol,
+        string? tpye);
 
     // Yeni işlem ekle — al veya sat
     // userId → işlemi kimin yaptığı

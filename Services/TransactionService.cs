@@ -21,15 +21,51 @@ public class TransactionService : ITransactionService
         _transactionrepository = transactionrepository;
         _mapper = mapper;
     }
-    // Kullanıcıya ait tüm işlemleri getir ve DTO'ya dönüştür
-    public async Task<IEnumerable<TransactionDto>> GetUserTransactionAsync(string userId)
+    // Sayfalanmış ve filtrelenmiş işlem listesi
+    public async Task<PaginatedResultDto<TransactionDto>> GetUserTransactionsAsync(
+        string userId,
+        int page,
+        int pageSize,
+        string? coinSymbol,
+        string? type)
     {
-        // Repository'den işlemleri al
-        var transaction = await _transactionrepository.GetByUserIdAsync(userId);
+        // Repository'den kullanıcının tüm işlemlerini al
+        var transactions = await _transactionrepository.GetByUserIdAsync(userId);
 
-        // Transaction listesini TransactionDto listesine dönüştür
-        // IEnumerable<Transaction> → IEnumerable<TransactionDto>
-        return _mapper.Map<IEnumerable<TransactionDto>>(transaction);
+        // Coin sembolüne göre filtrele — null ise filtreleme
+        if (!string.IsNullOrEmpty(coinSymbol))
+            transactions = transactions.Where(t => t.CoinSymbol == coinSymbol.ToUpper());
+        
+        //İşlem Tipine göre filtrele - buy veya sell
+        if(!string.IsNullOrEmpty(type))
+            transactions = transactions.Where(t => t.Type == type.ToUpper());
+
+        //Toplam kayıt sayısı - filtrelenmiş sonuçtan
+        var totalCount = transactions.Count();
+
+        // Toplam sayfa sayısı — Math.Ceiling yuvarlama yapar
+        // Örnek: 15 kayıt / 10 = 1.5 → 2 sayfa
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+        // Sayfalama — kaç kayıt atlayacağız
+        // Örnek: sayfa 2, pageSize 10 → 10 kayıt atla
+        var data = transactions
+            .Skip((page - 1)* pageSize)     // (2-1) * 10 = 10 kayıt atla
+            .Take(pageSize)                 // sonraki 10 kaydı al
+            .ToList();
+
+
+        //DTO ya dönüştür
+        var dtoList = _mapper.Map<IEnumerable<TransactionDto>>(data);
+
+        return new PaginatedResultDto<TransactionDto>
+        {
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            CurrentPage = page,
+            PageSize = pageSize,
+            Data = dtoList
+        };
     }
 
     // Yeni işlem ekle
