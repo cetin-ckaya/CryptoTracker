@@ -15,7 +15,17 @@ Kullanıcıların kripto para portföylerini gerçek zamanlı olarak takip edebi
 
 ---
 
-## 🛠️ Teknolojiler
+
+## 📸 Ekran Görüntüleri
+
+![Dashboard](<img width="1919" height="854" alt="dashboard" src="https://github.com/user-attachments/assets/d2e5261f-9cbb-4ede-907b-1776cf413c03" />)
+![İşlemler](<img width="1919" height="855" alt="transactions" src="https://github.com/user-attachments/assets/14d258d4-892e-4435-b914-04aaafa1f9c4" />)
+
+---
+
+
+
+🛠️ Teknolojiler
 
 ### Backend
 | Teknoloji | Kullanım |
