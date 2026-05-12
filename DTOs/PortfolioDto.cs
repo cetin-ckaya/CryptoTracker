@@ -31,4 +31,6 @@ public class PortfolioDto
     // Kar/zarar yüzdesi
     // (ProfitLoss / TotalInvested) * 100
     public decimal ProfitLossPercentage { get; set; }
+
+    public decimal CurrentPrice { get; set; }
 }

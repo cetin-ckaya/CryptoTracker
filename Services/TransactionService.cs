@@ -38,7 +38,7 @@ public class TransactionService : ITransactionService
         
         //İşlem Tipine göre filtrele - buy veya sell
         if(!string.IsNullOrEmpty(type))
-            transactions = transactions.Where(t => t.Type == type.ToUpper());
+            transactions = transactions.Where(t => t.Type.ToLower() == type.ToLower());
 
         //Toplam kayıt sayısı - filtrelenmiş sonuçtan
         var totalCount = transactions.Count();

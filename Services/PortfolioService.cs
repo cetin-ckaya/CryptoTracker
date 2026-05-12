@@ -113,55 +113,48 @@ public class PortfolioService : IPortfolioService
     }
 
     // Bir coinin tüm işlemlerinden portföy hesaplayan yardımcı metod
-    private PortfolioDto CalculatePortfolio(string coinSymbol, List<Models.Transaction> transactions, decimal currentPrice) // list models transaction ne demek
+        // Bir coinin tüm işlemlerinden portföy hesaplayan yardımcı metod
+    private PortfolioDto CalculatePortfolio(string coinSymbol, List<Models.Transaction> transactions, decimal currentPrice)
     {
-        //Sadece alış işlemlerini al
-        var buyTransaction = transactions.Where(t => t.Type == "buy").ToList();
+        // Büyük/küçük harf duyarlılığını ortadan kaldırmak için ToLower() kullanıyoruz
+        var buyTransactions = transactions.Where(t => t.Type.ToLower() == "buy").ToList();
+        var sellTransactions = transactions.Where(t => t.Type.ToLower() == "sell").ToList();
 
-        //Sadece satış işlemlerini al
-        var sellTransaction = transactions.Where(t =>t.Type == "sell").ToList();
-
-        // Toplam alınan coin miktarı
-        // Örnek: 0.5 BTC + 0.3 BTC = 0.8 BTC alındı
-        var totalBought = buyTransaction.Sum(t => t.Amount);
-
-        // Toplam satılan coin miktarı
-        var totalSold = sellTransaction.Sum(t => t.Amount);
-
-        // Elimizdeki coin miktarı
-        // Alınan - Satılan = Kalan
+        // 1. Miktar Hesaplaması
+        var totalBought = buyTransactions.Sum(t => t.Amount);
+        var totalSold = sellTransactions.Sum(t => t.Amount);
         var totalAmount = totalBought - totalSold;
 
-        // Toplam yatırım tutarı — her alışın tutarını topla
-        // Örnek: 0.5 BTC * $60,000 + 0.3 BTC * $65,000 = $49,500
-        var totalInvested = buyTransaction.Sum(t => t.Amount * t.Price);
+        // 2. Alışlara ödenen toplam para ve Ortalama Maliyet
+        var totalPaid = buyTransactions.Sum(t => t.Amount * t.Price);
+        var averageBuyPrice = totalBought > 0 ? totalPaid / totalBought : 0;
 
-        // Ortalama alış fiyatı
-        // Toplam yatırım / toplam alınan miktar
-        // Örnek: $49,500 / 0.8 BTC = $61,875 ortalama maliyet
-        var averageBuyPrice = totalBought > 0 ? totalInvested / totalBought : 0;
+        // 3. ŞU AN ELİMİZDE KALAN coinlerin maliyeti (Dashboard'da Toplam Yatırım olarak görünen)
+        var totalInvested = totalAmount * averageBuyPrice;
 
-        // Şu an için CurrentValue = 0
-        // elimizdeki miktar * anlık fiyat = güncel değer
+        // 4. Satışlardan elde edilen toplam gelir
+        var totalMoneyReceived = sellTransactions.Sum(t => t.Amount * t.Price);
+
+        // 5. Güncel Değer (Elimizdeki coinlerin anlık fiyat karşılığı)
         var currentValue = totalAmount * currentPrice;
 
-        // Kar/zarar = Güncel değer - Toplam yatırım
-        var profitLoss = currentValue - totalInvested;
+        // 6. Toplam Kar/Zarar 
+        // Formül: (Şu anki değer + Satıştan gelen para) - Alışa ödenen toplam para
+        var profitLoss = (currentValue + totalMoneyReceived) - totalPaid;
 
-        // Kar/zarar yüzdesi
-        // Sıfıra bölme hatasını önlemek için totalInvested > 0 kontrolü
-        var profitLossPercentage = totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0;
-
+        // 7. Kar/Zarar Yüzdesi (Tüm yatırıma oranla)
+        var profitLossPercentage = totalPaid > 0 ? (profitLoss / totalPaid) * 100 : 0;
 
         return new PortfolioDto
         {
             CoinSymbol = coinSymbol,
             TotalAmount = totalAmount,
             AverageBuyPrice = averageBuyPrice,
-            TotalInvested = totalInvested,
+            TotalInvested = totalInvested, // Kalan coinlerin maliyeti yansıyacak
             CurrentValue = currentValue,
-            ProfitLoss = profitLoss,
-            ProfitLossPercentage = profitLossPercentage
-        }; //yazmamızdaki amaç ne ? ne işe yaradı
+            ProfitLoss = profitLoss,       // Satış karları da dahil gerçek kâr!
+            ProfitLossPercentage = profitLossPercentage,
+            CurrentPrice = currentPrice
+        }; 
     }
 }

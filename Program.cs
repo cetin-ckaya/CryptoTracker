@@ -30,12 +30,16 @@ builder.Services.AddScoped<ITransactionService,TransactionService>();
 builder.Services.AddScoped<IPortfolioService, PortfolioService>();
 
 // CoinService'i Scoped olarak kaydet ama HttpClient'a BaseAddress'i burada ver
-builder.Services.AddHttpClient<ICoinService,CoinService>(client =>
+// CoinService için SSL doğrulamasını devre dışı bırak
+builder.Services.AddHttpClient<ICoinService, CoinService>(client =>
 {
-    // BaseAddress'i burada set ediyoruz — CoinService constructor'ına gerek kalmıyor
     client.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
     client.DefaultRequestHeaders.Add("User-Agent", "CryptoTracker/1.0");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    // SSL sertifika doğrulamasını atla — geliştirme ortamı için
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
 // TransactionRepository'yi dependency injection'a kaydet
@@ -105,7 +109,7 @@ builder.Services.AddCors(options =>
     {
         // React uygulamamızın çalışacağı adrese izin veriyoruz
         // İleride React'ı 3000 portunda başlatacağız
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
 
         // Tüm HTTP metodlarına izin ver (GET, POST, PUT, DELETE)
         .AllowAnyMethod()
@@ -145,6 +149,10 @@ using (var scope = app.Services.CreateScope())
      // Seed data'yı çalıştır — veri varsa hiçbir şey yapmaz
      await SeedData.InitializeAsync(userManager, context);
 }   
+
+    // Uygulama başlarken CoinGecko cache'ini ön yükle
+    var coinService = app.Services.GetRequiredService<ICoinService>();
+    await coinService.GetCoinPriceAsync("BTC");
 
 app.MapControllers();
 
