@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using CryptoTracker.Services;
 using CryptoTracker.Repositories;
 using CryptoTracker.Mappings;
+using CryptoTracker.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,10 +37,6 @@ builder.Services.AddHttpClient<ICoinService, CoinService>(client =>
     client.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
     client.DefaultRequestHeaders.Add("User-Agent", "CryptoTracker/1.0");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-    // SSL sertifika doğrulamasını atla — geliştirme ortamı için
-    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
 // TransactionRepository'yi dependency injection'a kaydet
@@ -128,6 +125,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // CORS middleware'i — tanımladığımız politikayı aktif et
 // Bu satır olmazsa tarayıcı React'tan gelen istekleri engeller

@@ -85,6 +85,12 @@ public class TransactionController : ControllerBase
         //İşlem bulunamadıysa 404 döndür
         if(!result) return NotFound(new {message = "İşlem Bulunamadı"});
 
+        var success = await _transactionservice.DeleteTransactionAsync(id, userId);
+    
+        if (!success)
+            throw new KeyNotFoundException($"İşlem bulunamadı: {id}");
+
+
         // Başarıyla silindiyse 204 No Content döndür
         // 204 → başarılı ama döndürülecek içerik yok
         return NoContent();

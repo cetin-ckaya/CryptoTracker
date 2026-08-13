@@ -25,98 +25,111 @@ public class CoinService : ICoinService
         }
     }
 
-    private async Task EnsureCoinIdsLoadedAsync()
+private async Task EnsureCoinIdsLoadedAsync()
+{
+    if(_coinIds.Any() && DateTime.UtcNow - _lastCacheTime < TimeSpan.FromHours(1))
+        return;
+
+    try
     {
-        if(_coinIds.Any() && DateTime.UtcNow - _lastCacheTime < TimeSpan.FromHours(1))
-            return;
+        // 🔥 TAM URL - BaseAddress gerekmez
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("User-Agent", "CryptoTracker/1.0");
+        
+        var response = await httpClient.GetStringAsync(
+            "https://api.coingecko.com/api/v3/coins/list"
+        );
+        
+        Console.WriteLine($"✅ Coin listesi çekildi, uzunluk: {response.Length}");
+        
+        var json = JsonDocument.Parse(response);
 
-        try
+        var knowCoins = new Dictionary<string,string>
         {
-            var response = await _httpclient.GetStringAsync("coins/list");
-            var json = JsonDocument.Parse(response);
+            { "BTC", "bitcoin" }, { "ETH", "ethereum" }, { "SOL", "solana" },
+            { "BNB", "binancecoin" }, { "ADA", "cardano" }, { "XRP", "ripple" },
+            { "DOGE", "dogecoin" }, { "DOT", "polkadot" }, { "AVAX", "avalanche-2" },
+            { "MATIC", "matic-network" }, { "LINK", "chainlink" }, { "UNI", "uniswap" },
+            { "LTC", "litecoin" }, { "ATOM", "cosmos" }, { "TRX", "tron" },
+            { "EIGEN", "eigenlayer" }, { "METIS", "metis-token" },
+            { "PEPE", "pepe" }, { "SHIB", "shiba-inu" }
+        };
 
-            var knowCoins = new Dictionary<string,string>
-            {
-                { "BTC", "bitcoin" }, { "ETH", "ethereum" }, { "SOL", "solana" },
-                { "BNB", "binancecoin" }, { "ADA", "cardano" }, { "XRP", "ripple" },
-                { "DOGE", "dogecoin" }, { "DOT", "polkadot" }, { "AVAX", "avalanche-2" },
-                { "MATIC", "matic-network" }, { "LINK", "chainlink" }, { "UNI", "uniswap" },
-                { "LTC", "litecoin" }, { "ATOM", "cosmos" }, { "TRX", "tron" },
-                
-                // 🔥 EIGEN ekli olduğundan emin olun
-                { "EIGEN", "eigenlayer" },
-                { "AI", "sleepless-ai" },
-                { "PEPE", "pepe" },
-                { "SHIB", "shiba-inu" },
-                { "METIS", "metis-token" }
-            };
+        var allCoins = json.RootElement
+        .EnumerateArray()
+        .GroupBy(c => c.GetProperty("symbol").GetString()!.ToUpper())
+        .ToDictionary(
+            g => g.Key,
+            g => g.First().GetProperty("id").GetString()!
+        );
 
-            var allCoins = json.RootElement
-            .EnumerateArray()
-            .GroupBy(c => c.GetProperty("symbol").GetString()!.ToUpper())
-            .ToDictionary(
-                g => g.Key,
-                g => g.First().GetProperty("id").GetString()!
-            );
-
-            _coinIds = allCoins;
-            foreach (var (symbol, id) in knowCoins)
-                _coinIds[symbol] = id;
-            
-            _lastCacheTime = DateTime.UtcNow;
-        }
-        catch (Exception ex)
+        _coinIds = allCoins;
+        foreach (var (symbol, id) in knowCoins)
+            _coinIds[symbol] = id;
+        
+        _lastCacheTime = DateTime.UtcNow;
+        Console.WriteLine($"✅ {_coinIds.Count} adet coin ID yüklendi");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Coin ID yükleme hatası: {ex.Message}");
+        if (ex.InnerException != null)
         {
-            Console.WriteLine($"Coin ID yükleme hatası: {ex.Message}");
+            Console.WriteLine($"🔍 Inner: {ex.InnerException.Message}");
         }
     }
+}
 
-    public async Task<decimal?> GetCoinPriceAsync(string coinSymbol)
+public async Task<decimal?> GetCoinPriceAsync(string coinSymbol)
+{
+    await EnsureCoinIdsLoadedAsync();
+    var symbol = coinSymbol.ToUpper();
+
+    if(!_coinIds.TryGetValue(symbol, out var coinId))
     {
-        await EnsureCoinIdsLoadedAsync();
-        var symbol = coinSymbol.ToUpper();
-
-        if(!_coinIds.TryGetValue(symbol, out var coinId))
-        {
-            Console.WriteLine($"Coin ID bulunamadı: {symbol}");
-            return null;
-        }
-
-        try
-        {
-            var url = $"simple/price?ids={coinId}&vs_currencies=usd";
-            var response = await _httpclient.GetStringAsync(url);
-            var json = JsonDocument.Parse(response);
-
-            var price = json.RootElement
-                .GetProperty(coinId)    
-                .GetProperty("usd")     
-                .GetDecimal();          
-
-            // Başarılı çekimi cache'le
-            _priceCache[symbol] = price;
-            _priceCacheTime[symbol] = DateTime.UtcNow;
-            
-            Console.WriteLine($"✅ {symbol} fiyatı çekildi: ${price}");
-
-            return price;
-        }
-        catch (Exception ex)
-        {   
-            Console.WriteLine($"❌ {symbol} API hatası: {ex.Message}");
-            
-            // Cache'de var mı kontrol et
-            if (_priceCache.TryGetValue(symbol, out var cachedPrice))
-            {
-                var cacheTime = _priceCacheTime.TryGetValue(symbol, out var t) ? t : DateTime.MinValue;
-                Console.WriteLine($"📦 {symbol} cache'den dönüldü: ${cachedPrice} (çekilme: {cacheTime})");
-                return cachedPrice;
-            }
-
-            Console.WriteLine($"⚠️ {symbol} için cache de boş, null dönülüyor");
-            return null;
-        }
+        Console.WriteLine($"❌ Coin ID bulunamadı: {symbol}");
+        return null;
     }
+
+    try
+    {
+        // 🔥 TAM URL Kullan
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("User-Agent", "CryptoTracker/1.0");
+        
+        var url = $"https://api.coingecko.com/api/v3/simple/price?ids={coinId}&vs_currencies=usd";
+        Console.WriteLine($"🌐 {url}");
+        
+        var response = await httpClient.GetStringAsync(url);
+        Console.WriteLine($"✅ Yanıt: {response}");
+        
+        var json = JsonDocument.Parse(response);
+
+        var price = json.RootElement
+            .GetProperty(coinId)    
+            .GetProperty("usd")     
+            .GetDecimal();          
+
+        _priceCache[symbol] = price;
+        _priceCacheTime[symbol] = DateTime.UtcNow;
+        
+        Console.WriteLine($"✅ {symbol} fiyatı: ${price}");
+
+        return price;
+    }
+    catch (Exception ex)
+    {   
+        Console.WriteLine($"❌ {symbol} API hatası: {ex.Message}");
+        
+        if (_priceCache.TryGetValue(symbol, out var cachedPrice))
+        {
+            Console.WriteLine($"📦 {symbol} cache'den: ${cachedPrice}");
+            return cachedPrice;
+        }
+
+        return null;
+    }
+}
 
     public async Task<Dictionary<string,decimal>> GetCoinPricesAsync(IEnumerable<string> coinSymbols)
     {
