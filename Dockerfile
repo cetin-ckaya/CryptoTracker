@@ -1,5 +1,5 @@
-# 1. Build Aşaması (.NET SDK 9.0 veya preview)
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+# 1. Build Aşaması (.NET SDK 10.0)
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Proje dosyalarını kopyala ve restore et
@@ -11,7 +11,7 @@ COPY . .
 RUN dotnet publish -c Release -o /app/out
 
 # 2. Çalıştırma Aşaması (Runtime)
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/out .
 
